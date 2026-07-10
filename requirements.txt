@@ -1,10 +1,12 @@
-fastapi>=0.115
+fastapi>=0.118
 uvicorn[standard]>=0.30
 sqlalchemy>=2.0
 pydantic-settings>=2.3
 email-validator>=2.1
 passlib>=1.7.4
-bcrypt==4.0.1
+openai>=1.40.0
+bcrypt==5.0.0
 pyjwt>=2.8
 psycopg2-binary>=2.9
 alembic>=1.13
+tzdata

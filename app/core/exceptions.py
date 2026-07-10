@@ -5,6 +5,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.services.llm_service import LLMError
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,3 +28,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def unhandled_handler(request: Request, exc: Exception):
         logger.exception("Unhandled error on %s", request.url.path)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    
+    @app.exception_handler(LLMError)
+    async def llm_error_handler(request: Request, exc: LLMError) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})

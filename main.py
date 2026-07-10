@@ -1,4 +1,4 @@
-import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,15 +6,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, chats, messages, users
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
+from app.core.logging import RequestContextMiddleware, setup_logging
 from app.database.session import Base, engine
-from app import models  # noqa: F401 — registers all 3 models
+from app.services import llm_service
 
-Base.metadata.create_all(bind=engine)
+setup_logging()   # before FastAPI() so startup logs are formatted too
 
-logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="LLM Chat Service", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)   # no Alembic yet — creates missing tables only
+    yield
+    await llm_service.aclose()              # return the httpx pool
 
+
+app = FastAPI(title="AI Chat Backend", lifespan=lifespan)
+
+app.add_middleware(RequestContextMiddleware)   # added LAST = runs FIRST (outermost)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -32,5 +40,5 @@ app.include_router(messages.router)
 
 
 @app.get("/health", tags=["Health"])
-def health():
+def health() -> dict[str, str]:
     return {"status": "ok"}
