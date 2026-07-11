@@ -11,14 +11,19 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt   # own layer: deps re-install only when this file changes
+# own layer: deps re-install only when this file changes
+RUN pip install --no-cache-dir -r requirements.txt
 
+# main.py lives at the repo root, so it must be copied alongside the app package
 COPY app ./app
+COPY main.py .
 
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser                                          # never run as root
+# never run as root  (this comment MUST be on its own line, not after USER)
+USER appuser
 
 EXPOSE 8000
 
-# 0.0.0.0, not 127.0.0.1 — localhost inside a container is unreachable from outside it
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 0.0.0.0, not 127.0.0.1 — localhost inside a container is unreachable from outside it.
+# module is `main` (main.py is at the root), NOT `app.main`.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

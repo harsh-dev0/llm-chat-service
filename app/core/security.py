@@ -32,6 +32,9 @@ def create_access_token(user_id: int) -> str:
 def create_refresh_token(user_id: int) -> str:
     return _create_token(user_id, timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS), "refresh")
 
+def create_reset_token(user_id: int) -> str:
+    return _create_token(user_id, timedelta(minutes=30), "reset")
+
 
 def decode_token(token: str) -> dict:
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])  # raises if expired/tampered

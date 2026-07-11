@@ -3,12 +3,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import (create_access_token, create_refresh_token,
-                               create_reset_token, hash_password, verify_password)
+                               hash_password, verify_password)
 from app.api.deps import get_current_user, get_token_payload, credentials_error
 from app.database.session import get_db
 from app.models.user import User
-from app.schemas.auth import (ChangePasswordRequest, ForgotPasswordRequest,
-                              LoginRequest, ResetPasswordRequest, TokenResponse, RefreshRequest)
+from app.schemas.auth import (ChangePasswordRequest,
+                              LoginRequest, TokenResponse, RefreshRequest)
 from app.schemas.common import MessageResponse
 from app.schemas.user import UserCreate, UserResponse
 
@@ -57,8 +57,8 @@ def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/forgot-password", response_model=MessageResponse)
-def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+# @router.post("/forgot-password", response_model=MessageResponse)
+# def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.email == data.email))
     if user:
         token = create_reset_token(user.id)
@@ -66,8 +66,8 @@ def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     return MessageResponse(message="If that email exists, a reset link has been sent.")
 
 
-@router.post("/reset-password", response_model=MessageResponse)
-def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+# @router.post("/reset-password", response_model=MessageResponse)
+# def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     payload = get_token_payload(data.token, "reset")
     user = db.get(User, int(payload["sub"]))
     if user is None:
